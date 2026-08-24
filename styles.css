@@ -614,3 +614,159 @@ html[data-mode="static"] .beat.is-in {
 
   html[data-mode="static"] .beat { --e: 1; }
 }
+
+/* ==========================================================================
+   AVIAP — MELHORIAS VISUAIS
+   IMPORTANTE:
+   Esta seção NÃO altera a lógica da animação.
+   ========================================================================== */
+
+.topbar__name {
+  font-weight: 500;
+  letter-spacing: 0.22em;
+}
+
+.topbar__brand {
+  transition: opacity 300ms var(--ease-out);
+}
+
+.topbar__brand:hover {
+  opacity: 0.82;
+}
+
+.topbar__cta {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+
+/* ============================================================
+   TEXTOS
+   ============================================================ */
+
+.beat .display {
+  max-width: 11ch;
+}
+
+.beat .body {
+  max-width: 42ch;
+}
+
+
+/* ============================================================
+   HERO
+   ============================================================ */
+
+.beat--hero .display {
+  max-width: 10ch;
+  margin-inline: auto;
+
+  text-shadow:
+    0 2px 35px rgba(5, 7, 10, 0.75),
+    0 1px 80px rgba(5, 7, 10, 0.45);
+}
+
+.beat--hero .eyebrow {
+  letter-spacing: 0.38em;
+}
+
+
+/* ============================================================
+   SEÇÃO FINAL
+   ============================================================ */
+
+.outro {
+  border-top: 1px solid rgba(244, 246, 248, 0.08);
+}
+
+.outro__title {
+  max-width: 12ch;
+}
+
+
+/* ============================================================
+   CARDS
+   ============================================================ */
+
+.facts {
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.facts__item {
+  min-height: 150px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+
+  transition:
+    background-color 400ms var(--ease-out),
+    transform 400ms var(--ease-out);
+}
+
+.facts__item:hover {
+  background: rgba(143, 199, 255, 0.035);
+}
+
+.facts dd {
+  line-height: 1.35;
+}
+
+
+/* ============================================================
+   BOTÃO FINAL
+   ============================================================ */
+
+.btn {
+  background: rgba(143, 199, 255, 0.025);
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.btn:hover {
+  background: rgba(143, 199, 255, 0.12);
+
+  box-shadow:
+    0 0 35px rgba(143, 199, 255, 0.08);
+}
+
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+
+.foot {
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(143, 199, 255, 0.025),
+      transparent
+    );
+}
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 720px) {
+
+  .beat .display {
+    max-width: 9ch;
+  }
+
+  .beat .body {
+    max-width: 34ch;
+  }
+
+  .beat--hero .display {
+    max-width: 8ch;
+  }
+
+  .facts__item {
+    min-height: 125px;
+  }
+
+}

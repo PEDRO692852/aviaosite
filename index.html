@@ -1,191 +1,410 @@
 <!doctype html>
-<html lang="en" data-mode="boot">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Beyond the Horizon Conf — Where every journey begins.</title>
-<meta name="description" content="Beyond the Horizon Conf. Three days on the runway between ideas and the people building modern flight.">
-<meta name="theme-color" content="#05070a">
+<html lang="pt-BR" data-mode="boot">
 
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305070a'/%3E%3Cpath d='M4 17.5 28 12l-7 6.5-4 .6-3.2 4.4-1.6-.4 1.3-4.2z' fill='%238fc7ff'/%3E%3C/svg%3E">
-<link rel="preload" as="image" href="assets/poster.jpg" fetchpriority="high">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&display=swap">
-<link rel="stylesheet" href="styles.css">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+  <title>AVIAP — O futuro da aviação começa aqui.</title>
+
+  <meta
+    name="description"
+    content="AVIAP — Uma experiência criada para quem enxerga além do horizonte."
+  >
+
+  <meta name="theme-color" content="#05070a">
+
+  <link
+    rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305070a'/%3E%3Cpath d='M4 17.5 28 12l-7 6.5-4 .6-3.2 4.4-1.6-.4 1.3-4.2z' fill='%238fc7ff'/%3E%3C/svg%3E"
+  >
+
+  <link
+    rel="preload"
+    as="image"
+    href="assets/poster.jpg"
+    fetchpriority="high"
+  >
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500&display=swap"
+  >
+
+  <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
 
-<!-- Film grain + vignette, sits above everything, never interactive -->
-<div class="filmlayer" aria-hidden="true">
-  <div class="filmlayer__grain"></div>
-  <div class="filmlayer__vignette"></div>
-</div>
+  <!-- Film grain + vignette -->
+  <div class="filmlayer" aria-hidden="true">
+    <div class="filmlayer__grain"></div>
+    <div class="filmlayer__vignette"></div>
+  </div>
 
-<header class="topbar">
-  <a class="topbar__brand" href="#top">
-    <span class="topbar__mark" aria-hidden="true"></span>
-    <span class="topbar__name">Beyond&nbsp;the&nbsp;Horizon</span>
-  </a>
-  <nav class="topbar__nav">
-    <a href="#journey">Journey</a>
-    <a href="#details">Details</a>
-    <a class="topbar__cta" href="#details">Get a seat</a>
-  </nav>
-</header>
+  <!-- TOP BAR -->
+  <header class="topbar">
 
-<main id="top">
+    <a class="topbar__brand" href="#top">
+      <span class="topbar__mark" aria-hidden="true"></span>
+      <span class="topbar__name">AVIAP</span>
+    </a>
 
-  <!-- ────────────────────────────────────────────────────────────────
-       THE SCRUB SEQUENCE
-       .sequence__track  = the scroll runway; its height defines duration
-       .stage            = sticky viewport-filling frame
-       .beat[data-window]= text keyed to scrub progress (in, hold, hold, out)
-       ──────────────────────────────────────────────────────────────── -->
-  <section class="sequence" id="sequence" aria-label="Approach sequence">
-    <div class="sequence__track" id="track">
-      <div class="stage" id="stage">
+    <nav class="topbar__nav">
+      <a href="#journey">Experiência</a>
+      <a href="#details">Sobre</a>
+      <a class="topbar__cta" href="#details">Conheça</a>
+    </nav>
 
-        <div class="stage__media">
-          <video
-            class="stage__video"
-            id="video"
-            poster="assets/poster.jpg"
-            muted
-            playsinline
-            webkit-playsinline
-            disablepictureinpicture
-            disableremoteplayback
-            preload="auto"
-            tabindex="-1"
-            aria-hidden="true"></video>
-          <script>
-            /* Pick the source before the parser moves on, so preload="auto"
-               starts fetching the right file immediately. Kept inline on
-               purpose: a deferred script would cost a round-trip of idle. */
-            (function () {
-              var v = document.getElementById('video');
-              var c = navigator.connection || {};
-              var slim = window.matchMedia('(max-width: 900px)').matches ||
-                         c.saveData === true ||
-                         /^(slow-2g|2g|3g)$/.test(c.effectiveType || '');
-              v.src = slim ? 'assets/jet-v7-web-540.mp4' : 'assets/jet-v7-web.mp4';
-            })();
-          </script>
+  </header>
 
-          <!-- Shown instead of the video in static mode -->
-          <img class="stage__still" src="assets/poster.jpg" alt="A jet in level flight above a cloud deck." decoding="async">
+  <main id="top">
 
-          <!-- Readability scrims. main.js fades each one with the beats that
-               need it, so no frame of footage ever has to fight the type. -->
-          <div class="scrim scrim--top" id="scrimTop" aria-hidden="true"></div>
-          <div class="scrim scrim--left" id="scrimLeft" aria-hidden="true"></div>
+    <!-- ================================================================
+         THE SCRUB SEQUENCE
+         NÃO ALTERAR A ESTRUTURA DESTA PARTE.
+         ================================================================ -->
 
-          <div class="stage__bars" aria-hidden="true"><i></i><i></i></div>
+    <section
+      class="sequence"
+      id="sequence"
+      aria-label="Experiência AVIAP"
+    >
+
+      <div class="sequence__track" id="track">
+
+        <div class="stage" id="stage">
+
+          <div class="stage__media">
+
+            <video
+              class="stage__video"
+              id="video"
+              poster="assets/poster.jpg"
+              muted
+              playsinline
+              webkit-playsinline
+              disablepictureinpicture
+              disableremoteplayback
+              preload="auto"
+              tabindex="-1"
+              aria-hidden="true"
+            ></video>
+
+            <script>
+              (function () {
+                var v = document.getElementById('video');
+                var c = navigator.connection || {};
+
+                var slim =
+                  window.matchMedia('(max-width: 900px)').matches ||
+                  c.saveData === true ||
+                  /^(slow-2g|2g|3g)$/.test(c.effectiveType || '');
+
+                v.src = slim
+                  ? 'assets/jet-v7-web-540.mp4'
+                  : 'assets/jet-v7-web.mp4';
+              })();
+            </script>
+
+            <img
+              class="stage__still"
+              src="assets/poster.jpg"
+              alt="Avião voando acima das nuvens."
+              decoding="async"
+            >
+
+            <div
+              class="scrim scrim--top"
+              id="scrimTop"
+              aria-hidden="true"
+            ></div>
+
+            <div
+              class="scrim scrim--left"
+              id="scrimLeft"
+              aria-hidden="true"
+            ></div>
+
+            <div class="stage__bars" aria-hidden="true">
+              <i></i>
+              <i></i>
+            </div>
+
+          </div>
+
+          <!-- ==========================================================
+               TEXTOS DA EXPERIÊNCIA
+               Os data-window foram mantidos exatamente iguais.
+               NÃO ALTERAR.
+               ========================================================== -->
+
+          <div class="stage__overlay">
+
+            <!-- HERO -->
+            <article
+              class="beat beat--hero"
+              data-window="0, 0, 0.05, 0.10"
+            >
+
+              <p class="eyebrow">
+                AVIAP · EXPERIÊNCIA AÉREA
+              </p>
+
+              <h1 class="display">
+                O futuro da aviação começa aqui.
+              </h1>
+
+              <p class="lede">
+                Uma experiência criada para quem enxerga além do horizonte.
+              </p>
+
+            </article>
+
+
+            <!-- 01 -->
+            <article
+              class="beat"
+              id="journey"
+              data-window="0.115, 0.15, 0.215, 0.25"
+            >
+
+              <p class="eyebrow">
+                01 — A EXPERIÊNCIA
+              </p>
+
+              <h2 class="display">
+                Mais do que um voo.
+              </h2>
+
+              <p class="body">
+                Existe uma diferença entre simplesmente chegar a um destino
+                e viver a jornada. A AVIAP nasceu para transformar cada
+                momento em uma experiência que permanece depois do pouso.
+              </p>
+
+            </article>
+
+
+            <!-- 02 -->
+            <article
+              class="beat"
+              data-window="0.28, 0.32, 0.40, 0.45"
+            >
+
+              <p class="eyebrow">
+                02 — O DESTINO
+              </p>
+
+              <h2 class="display">
+                Mais perto do que parece.
+              </h2>
+
+              <p class="body">
+                Grandes experiências começam muito antes da chegada.
+                Tecnologia, design e precisão se encontram para criar
+                uma nova maneira de enxergar o mundo acima das nuvens.
+              </p>
+
+            </article>
+
+
+            <!-- 03 -->
+            <article
+              class="beat"
+              data-window="0.52, 0.56, 0.66, 0.71"
+            >
+
+              <p class="eyebrow">
+                03 — A EXPERIÊNCIA
+              </p>
+
+              <h2 class="display">
+                Entre. O próximo nível começa aqui.
+              </h2>
+
+              <p class="body">
+                Cada detalhe foi pensado para criar uma experiência
+                fluida, sofisticada e inesquecível. Do primeiro contato
+                ao último olhar pela janela.
+              </p>
+
+            </article>
+
+
+            <!-- 04 -->
+            <article
+              class="beat"
+              data-window="0.79, 0.83, 1, 1"
+            >
+
+              <p class="eyebrow">
+                04 — A CHEGADA
+              </p>
+
+              <h2 class="display">
+                Seu próximo destino começa agora.
+              </h2>
+
+              <p class="body">
+                O pouso não é o fim da jornada. É o momento em que
+                uma nova possibilidade começa a ganhar forma.
+              </p>
+
+            </article>
+
+          </div>
+
+
+          <!-- SCROLL HINT -->
+          <div
+            class="hint"
+            id="hint"
+            aria-hidden="true"
+          >
+            <span class="hint__label">
+              Role para explorar
+            </span>
+
+            <span class="hint__arrow">
+              ↓
+            </span>
+          </div>
+
+
+          <!-- ALTITUDE RAIL -->
+          <div
+            class="rail"
+            id="rail"
+            aria-hidden="true"
+          >
+
+            <div class="rail__line">
+              <div
+                class="rail__fill"
+                id="railFill"
+              ></div>
+            </div>
+
+            <div class="rail__ticks">
+              <i></i>
+              <i></i>
+              <i></i>
+              <i></i>
+              <i></i>
+            </div>
+
+          </div>
+
         </div>
+      </div>
 
-        <!-- Beat windows are timed against the footage itself:
-               0.00–0.09  jet distant above the cloud deck
-               0.12–0.24  nose fills the frame — the approach
-               0.25       cut to the cabin threshold
-               0.30–0.75  dolly forward through the cabin
-               0.80–1.00  the private suite at the tail             -->
-        <div class="stage__overlay">
+    </section>
 
-          <!-- HERO ─ the jet is a speck; the frame is almost all sky -->
-          <article class="beat beat--hero" data-window="0, 0, 0.05, 0.10">
-            <p class="eyebrow">Mar 14 – 16 · 2027 · Lisbon</p>
-            <h1 class="display">Beyond the Horizon Conf</h1>
-            <p class="lede">Where every journey begins.</p>
-          </article>
 
-          <!-- 01 ─ The Journey · over the nose, closing in -->
-          <article class="beat" id="journey" data-window="0.115, 0.15, 0.215, 0.25">
-            <p class="eyebrow">01 — The Journey</p>
-            <h2 class="display">More than a flight.</h2>
-            <p class="body">Every departure is a small act of faith. The ground lets go,
-            and for a few hours the world is only what you can see from the window.
-            This was never about distance — it is about what waits on the other side.</p>
-          </article>
+    <!-- ================================================================
+         FINAL / AFTER THE ANIMATION
+         ================================================================ -->
 
-          <!-- 02 ─ The Threshold · the doorway, the moment of boarding -->
-          <article class="beat" data-window="0.28, 0.32, 0.40, 0.45">
-            <p class="eyebrow">02 — The Threshold</p>
-            <h2 class="display">Closer than it looks.</h2>
-            <p class="body">Three days. One runway between an idea and the people
-            building it. Engineers, designers and operators of modern flight,
-            in the same room, at the same altitude.</p>
-          </article>
+    <section
+      class="outro"
+      id="details"
+    >
 
-          <!-- 03 ─ The Cabin · deep inside now -->
-          <article class="beat" data-window="0.52, 0.56, 0.66, 0.71">
-            <p class="eyebrow">03 — The Cabin</p>
-            <h2 class="display">Step inside.</h2>
-            <p class="body">Twenty-four talks. Two hundred seats, one track,
-            no overlap. Nothing you have to miss to see something else.</p>
-          </article>
+      <div class="outro__inner">
 
-          <!-- 04 ─ Arrival · the suite at the tail, end of the dolly -->
-          <article class="beat" data-window="0.79, 0.83, 1, 1">
-            <p class="eyebrow">04 — Arrival</p>
-            <h2 class="display">Stay a while.</h2>
-            <p class="body">The doors open March 14th and do not close
-            until you have met everyone worth meeting.</p>
-          </article>
+        <p class="eyebrow reveal">
+          AVIAP · ALÉM DO HORIZONTE
+        </p>
 
-        </div>
+        <h2 class="display outro__title reveal">
+          Você chegou.<br>
+          Agora começa o próximo capítulo.
+        </h2>
 
-        <!-- Scroll affordance: only alive for the first breath of the sequence -->
-        <div class="hint" id="hint" aria-hidden="true">
-          <span class="hint__label">Scroll to explore</span>
-          <span class="hint__arrow">↓</span>
-        </div>
 
-        <!-- Altitude rail: progress through the sequence -->
-        <div class="rail" id="rail" aria-hidden="true">
-          <div class="rail__line"><div class="rail__fill" id="railFill"></div></div>
-          <div class="rail__ticks"><i></i><i></i><i></i><i></i><i></i></div>
-        </div>
+        <dl class="facts">
+
+          <div class="facts__item reveal">
+            <dt>Experiência</dt>
+            <dd>Além do convencional</dd>
+          </div>
+
+          <div class="facts__item reveal">
+            <dt>Conceito</dt>
+            <dd>Aviação · Tecnologia · Design</dd>
+          </div>
+
+          <div class="facts__item reveal">
+            <dt>Visão</dt>
+            <dd>O futuro em movimento</dd>
+          </div>
+
+          <div class="facts__item reveal">
+            <dt>Destino</dt>
+            <dd>Um novo horizonte</dd>
+          </div>
+
+        </dl>
+
+
+        <a
+          class="btn reveal"
+          href="mailto:hello@beyondthehorizon.conf?subject=Quero%20conhecer%20a%20AVIAP"
+        >
+          Quero conhecer
+          <span aria-hidden="true">→</span>
+        </a>
 
       </div>
-    </div>
-  </section>
 
-  <!-- ─────────────── After the runway: ordinary document flow ─────────────── -->
-  <section class="outro" id="details">
-    <div class="outro__inner">
-      <p class="eyebrow reveal">Arrival</p>
-      <h2 class="display outro__title reveal">You have landed<br>somewhere new.</h2>
+    </section>
 
-      <dl class="facts">
-        <div class="facts__item reveal"><dt>Dates</dt><dd>March 14 – 16, 2027</dd></div>
-        <div class="facts__item reveal"><dt>Where</dt><dd>Hangar 4, Lisbon</dd></div>
-        <div class="facts__item reveal"><dt>Seats</dt><dd>200, single track</dd></div>
-        <div class="facts__item reveal"><dt>Talks</dt><dd>24 across 3 days</dd></div>
-      </dl>
 
-      <a class="btn reveal" href="mailto:hello@beyondthehorizon.conf?subject=Seat%20request">
-        Request a seat <span aria-hidden="true">→</span>
-      </a>
-    </div>
-  </section>
+    <!-- FOOTER -->
 
-  <footer class="foot">
-    <span>Beyond the Horizon Conf</span>
-    <span>Lisbon · MMXXVII</span>
-  </footer>
+    <footer class="foot">
 
-</main>
+      <span>AVIAP</span>
 
-<noscript>
-  <style>
-    html[data-mode="boot"] .stage__video { display: none }
-    html[data-mode="boot"] .stage__still { opacity: 1 }
-    html[data-mode="boot"] .beat { opacity: 1; filter: none; transform: none }
-  </style>
-</noscript>
+      <span>
+        Além do horizonte
+      </span>
 
-<script src="main.js" type="module"></script>
+    </footer>
+
+  </main>
+
+
+  <noscript>
+
+    <style>
+      html[data-mode="boot"] .stage__video {
+        display: none;
+      }
+
+      html[data-mode="boot"] .stage__still {
+        opacity: 1;
+      }
+
+      html[data-mode="boot"] .beat {
+        opacity: 1;
+        filter: none;
+        transform: none;
+      }
+    </style>
+
+  </noscript>
+
+
+  <script
+    src="main.js"
+    type="module"
+  ></script>
+
 </body>
+
 </html>
