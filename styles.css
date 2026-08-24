@@ -1,0 +1,616 @@
+/* ==========================================================================
+   Beyond the Horizon Conf
+   --------------------------------------------------------------------------
+   Two layout modes, switched by html[data-mode] from main.js:
+
+     data-mode="scrub"   sticky stage, beats absolutely stacked and driven
+                         frame-by-frame from scroll progress.
+     data-mode="static"  no scrub. Poster hero, beats fall into normal document
+                         flow. Used for reduced-motion, save-data, and any
+                         failure to get the video ready.
+
+   "boot" is the pre-JS state: it renders as scrub would, but with the hero
+   already legible, so a slow main.js never shows a blank frame.
+   ========================================================================== */
+
+:root {
+  --ink:        #f4f6f8;
+  --ink-dim:    #a8b2bd;
+  --ink-faint:  #6b7783;
+  --void:       #05070a;
+  --accent:     #8fc7ff;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'Roboto Mono', Menlo, monospace;
+
+  /* Length of the scroll runway. Bigger = slower, more deliberate scrub.
+     main.js reads this to keep its math and the layout in sync. */
+  --track-vh: 720;
+
+  --gutter: clamp(1.25rem, 4vw, 4.5rem);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  background: var(--void);
+  /* No scroll-behavior: smooth — it fights the scrub loop's own easing. */
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  color: var(--ink);
+  background: var(--void);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+img, video { display: block; max-width: 100%; }
+
+::selection { background: var(--accent); color: var(--void); }
+
+:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+
+/* ── Shared type ─────────────────────────────────────────────────────────── */
+
+.display {
+  margin: 0;
+  font-weight: 200;
+  letter-spacing: -0.035em;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+h1.display { font-size: clamp(2.35rem, 6.6vw, 6.5rem); }
+h2.display { font-size: clamp(2.05rem, 5.4vw, 4.9rem); }
+
+.eyebrow {
+  margin: 0 0 clamp(1rem, 2vw, 1.75rem);
+  font-family: var(--font-mono);
+  font-size: clamp(0.62rem, 1vw, 0.72rem);
+  font-weight: 400;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.lede {
+  margin: clamp(1.25rem, 2.5vw, 2rem) 0 0;
+  font-size: clamp(1rem, 1.7vw, 1.45rem);
+  font-weight: 200;
+  letter-spacing: 0.02em;
+  color: var(--ink-dim);
+}
+
+.body {
+  margin: clamp(1.25rem, 2.5vw, 1.9rem) 0 0;
+  max-width: 46ch;
+  font-size: clamp(0.95rem, 1.25vw, 1.1rem);
+  line-height: 1.65;
+  color: var(--ink-dim);
+  text-wrap: pretty;
+}
+
+/* ── Film layer: grain + vignette over the whole page ────────────────────── */
+
+.filmlayer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+}
+
+.filmlayer__grain {
+  position: absolute;
+  inset: -150%;
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 800ms steps(1) infinite;
+}
+
+@keyframes grain {
+  0%   { transform: translate3d(0, 0, 0); }
+  25%  { transform: translate3d(-3%, 2%, 0); }
+  50%  { transform: translate3d(2%, -3%, 0); }
+  75%  { transform: translate3d(-2%, -1%, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+.filmlayer__vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 85% at 50% 45%, transparent 42%, rgba(5, 7, 10, 0.55) 100%),
+    linear-gradient(to bottom, rgba(5, 7, 10, 0.55) 0%, transparent 22%, transparent 62%, rgba(5, 7, 10, 0.85) 100%);
+}
+
+/* ── Top bar ─────────────────────────────────────────────────────────────── */
+
+.topbar {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: clamp(1.1rem, 2.4vw, 1.9rem) var(--gutter);
+  /* Revealed by main.js once the hero has begun to dissolve. */
+  opacity: 0;
+  transform: translateY(-0.6rem);
+  transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out);
+  pointer-events: none;
+}
+
+.topbar.is-visible { opacity: 1; transform: none; pointer-events: auto; }
+html[data-mode="static"] .topbar { opacity: 1; transform: none; pointer-events: auto; }
+
+.topbar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.topbar__mark {
+  width: 22px;
+  height: 1px;
+  background: var(--accent);
+  box-shadow: 0 4px 0 -0.5px var(--ink-faint);
+}
+
+.topbar__nav {
+  display: flex;
+  align-items: center;
+  gap: clamp(1rem, 2.4vw, 2.25rem);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.topbar__nav a {
+  color: var(--ink-dim);
+  text-decoration: none;
+  transition: color 260ms;
+}
+
+.topbar__nav a:hover { color: var(--ink); }
+
+.topbar__cta {
+  padding: 0.5rem 1.05rem;
+  border: 1px solid rgba(244, 246, 248, 0.22);
+  border-radius: 999px;
+  color: var(--ink) !important;
+  transition: border-color 260ms, background-color 260ms;
+}
+
+.topbar__cta:hover {
+  border-color: var(--accent);
+  background: rgba(143, 199, 255, 0.1);
+}
+
+@media (max-width: 640px) {
+  .topbar__nav a:not(.topbar__cta) { display: none; }
+}
+
+/* ── The scrub sequence ──────────────────────────────────────────────────── */
+
+.sequence__track {
+  position: relative;
+  height: calc(var(--track-vh) * 1vh);
+}
+
+.stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: clip;
+}
+
+.stage__media { position: absolute; inset: 0; }
+
+.stage__video,
+.stage__still {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* A hair of scale hides the sub-pixel edge some browsers leave while
+     repainting a seeking video. */
+  transform: scale(1.02);
+}
+
+.stage__still {
+  opacity: 0;
+  transition: opacity 600ms var(--ease-out);
+}
+
+/* Static mode swaps which of the two is on screen. */
+html[data-mode="static"] .stage__video { display: none; }
+html[data-mode="static"] .stage__still { opacity: 1; }
+
+/* ── Scrims ──────────────────────────────────────────────────────────────
+   The footage runs from a near-white sky to a cream leather cabin, so light
+   type has nothing reliable to sit on. Rather than dim every frame, each
+   scrim is faded in by main.js only while a beat that needs it is on screen,
+   and only over the part of the frame that beat occupies. */
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Behind the hero: title block up top, scroll hint at the bottom, bright
+   haze in between — so this one weights both ends. */
+.scrim--top {
+  background:
+    linear-gradient(to bottom,
+      rgba(5, 7, 10, 0.80) 0%,
+      rgba(5, 7, 10, 0.52) 40%,
+      rgba(5, 7, 10, 0.18) 60%,
+      transparent 74%),
+    linear-gradient(to top, rgba(5, 7, 10, 0.74) 0%, transparent 30%);
+}
+
+/* Behind the left-aligned beats. */
+.scrim--left {
+  background:
+    linear-gradient(100deg, rgba(5, 7, 10, 0.88) 0%, rgba(5, 7, 10, 0.62) 32%, rgba(5, 7, 10, 0.16) 58%, transparent 76%);
+}
+
+@media (max-width: 720px) {
+  /* No room to dodge the type on a phone: cover the whole frame. */
+  .scrim--left {
+    background: linear-gradient(to bottom, rgba(5, 7, 10, 0.4) 0%, rgba(5, 7, 10, 0.82) 55%, rgba(5, 7, 10, 0.92) 100%);
+  }
+}
+
+/* Letterbox. main.js eases --bar from 0 to 1 across the sequence. */
+.stage__bars { position: absolute; inset: 0; pointer-events: none; }
+
+.stage__bars i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: calc(2.2vh + (var(--bar, 0) * 4.4vh));
+  background: var(--void);
+}
+
+.stage__bars i:first-child { top: 0; }
+.stage__bars i:last-child  { bottom: 0; }
+
+/* ── Beats ───────────────────────────────────────────────────────────────── */
+
+.stage__overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+}
+
+.beat {
+  grid-area: 1 / 1;
+  align-self: center;
+  justify-self: start;
+  width: min(100%, 62ch);
+  padding: 0 var(--gutter);
+  /* main.js writes --e (0 → 1 envelope) per frame; everything derives from it,
+     so text motion is locked to the same clock as the video. */
+  opacity: var(--e, 0);
+  filter: blur(calc((1 - var(--e, 0)) * 14px));
+  transform: translate3d(0, calc((1 - var(--e, 0)) * 2.4rem), 0);
+  will-change: opacity, filter, transform;
+  /* Never let an invisible beat swallow a click. */
+  pointer-events: none;
+}
+
+/* Belt-and-braces on top of the scrims: the footage is graded footage, and a
+   soft shadow keeps type readable on the one frame nobody thought to check. */
+.beat .display,
+.beat .lede,
+.beat .body,
+.beat .eyebrow { text-shadow: 0 1px 24px rgba(5, 7, 10, 0.55); }
+
+html[data-mode="static"] .beat:not(.beat--hero) :is(.display, .lede, .body, .eyebrow) {
+  text-shadow: none;
+}
+
+/* The hero sits high in the frame so the jet stays clear of the type —
+   title-card composition, and the deepest blue of the sky is up there too. */
+.beat--hero {
+  justify-self: center;
+  align-self: start;
+  text-align: center;
+  width: min(92vw, 42rem);
+  padding-top: clamp(3.5rem, 10vh, 7.5rem);
+}
+
+.beat--hero .body,
+.beat--hero .lede { margin-inline: auto; }
+
+/* The subtitle lands near the cloud deck, which is the brightest thing in the
+   whole clip. Full-strength ink, not the dimmed variant. */
+.beat--hero .lede {
+  color: var(--ink);
+  text-shadow: 0 1px 20px rgba(5, 7, 10, 0.85);
+}
+
+/* Pre-JS and no-JS: hero legible, rest hidden. */
+html[data-mode="boot"] .beat--hero { --e: 1; }
+
+/* ── Scroll hint ─────────────────────────────────────────────────────────── */
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(2rem, 5vh, 3.5rem);
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.63rem;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  text-shadow: 0 1px 16px rgba(5, 7, 10, 0.9);
+  opacity: var(--e, 1);
+  transition: opacity 400ms linear;
+  pointer-events: none;
+}
+
+.hint__arrow {
+  font-size: 0.9rem;
+  letter-spacing: 0;
+  animation: drift 2.4s var(--ease-out) infinite;
+}
+
+@keyframes drift {
+  0%, 100% { transform: translateY(0);     opacity: 0.45; }
+  50%      { transform: translateY(0.4rem); opacity: 1; }
+}
+
+html[data-mode="static"] .hint { display: none; }
+
+/* ── Altitude rail ───────────────────────────────────────────────────────── */
+
+.rail {
+  position: absolute;
+  right: var(--gutter);
+  top: 50%;
+  translate: 0 -50%;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  opacity: 0;
+  transition: opacity 600ms var(--ease-out);
+}
+
+.rail.is-visible { opacity: 1; }
+
+.rail__line {
+  position: relative;
+  width: 1px;
+  height: clamp(90px, 18vh, 170px);
+  background: rgba(244, 246, 248, 0.16);
+}
+
+.rail__fill {
+  position: absolute;
+  inset: 0 0 auto;
+  width: 100%;
+  height: 0%;
+  background: var(--accent);
+  box-shadow: 0 0 12px rgba(143, 199, 255, 0.7);
+}
+
+.rail__ticks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.rail__ticks i {
+  width: 5px;
+  height: 1px;
+  background: rgba(244, 246, 248, 0.25);
+  transition: background-color 400ms, width 400ms var(--ease-out);
+}
+
+.rail__ticks i.is-on { background: var(--accent); width: 11px; }
+
+@media (max-width: 720px) { .rail { display: none; } }
+html[data-mode="static"] .rail { display: none; }
+
+/* ── Outro ───────────────────────────────────────────────────────────────── */
+
+.outro {
+  position: relative;
+  z-index: 2;
+  padding: clamp(6rem, 20vh, 14rem) var(--gutter) clamp(4rem, 10vh, 8rem);
+  background: var(--void);
+}
+
+.outro__inner { max-width: 68rem; margin: 0 auto; }
+
+.outro__title { margin-bottom: clamp(3rem, 8vh, 6rem); }
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 1px;
+  margin: 0 0 clamp(3rem, 8vh, 5rem);
+  background: rgba(244, 246, 248, 0.12);
+  border: 1px solid rgba(244, 246, 248, 0.12);
+}
+
+.facts__item { padding: clamp(1.4rem, 3vw, 2.1rem); background: var(--void); }
+
+.facts dt {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.facts dd {
+  margin: 0.85rem 0 0;
+  font-size: clamp(1rem, 1.5vw, 1.2rem);
+  font-weight: 200;
+  letter-spacing: -0.01em;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1.05rem 2.1rem;
+  border: 1px solid rgba(244, 246, 248, 0.28);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color 300ms, background-color 300ms, gap 300ms var(--ease-out);
+}
+
+.btn:hover {
+  gap: 1.4rem;
+  border-color: var(--accent);
+  background: rgba(143, 199, 255, 0.1);
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 2rem var(--gutter) 3rem;
+  border-top: 1px solid rgba(244, 246, 248, 0.1);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* Reveal-on-enter for anything outside the scrub track. */
+.reveal {
+  opacity: 0;
+  filter: blur(10px);
+  transform: translateY(1.6rem);
+  transition: opacity 900ms var(--ease-out), filter 900ms var(--ease-out), transform 900ms var(--ease-out);
+}
+
+.reveal.is-in { opacity: 1; filter: none; transform: none; }
+
+/* ==========================================================================
+   STATIC MODE
+   The sticky runway collapses into a plain stacked document.
+   ========================================================================== */
+
+html[data-mode="static"] .sequence__track { height: auto; }
+
+html[data-mode="static"] .stage {
+  position: static;
+  height: auto;
+  overflow: visible;
+}
+
+html[data-mode="static"] .stage__media {
+  position: relative;
+  inset: auto;
+  height: 78vh;
+  height: 78svh;
+}
+
+html[data-mode="static"] .stage__still { transform: none; }
+
+html[data-mode="static"] .stage__overlay {
+  position: static;
+  display: block;
+}
+
+/* The hero still sits on the poster; later beats become real sections. */
+html[data-mode="static"] .beat--hero {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  z-index: 2;
+}
+
+html[data-mode="static"] .beat {
+  --e: 1;
+  filter: none;
+  transform: none;
+  width: 100%;
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: clamp(4.5rem, 14vh, 9rem) var(--gutter);
+  pointer-events: auto;
+}
+
+html[data-mode="static"] .beat:not(.beat--hero) {
+  border-top: 1px solid rgba(244, 246, 248, 0.1);
+}
+
+/* Static mode still animates entrances — unless the user asked us not to. */
+html[data-mode="static"] .beat:not(.beat--hero) {
+  --e: 0;
+  transition: opacity 900ms var(--ease-out), filter 900ms var(--ease-out), transform 900ms var(--ease-out);
+  filter: blur(10px);
+  transform: translateY(1.6rem);
+}
+
+html[data-mode="static"] .beat.is-in {
+  --e: 1;
+  filter: none;
+  transform: none;
+}
+
+/* ── Reduced motion ──────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .filmlayer__grain { animation: none; }
+
+  /* Nothing arrives blurred or displaced; it is simply there. */
+  .reveal,
+  html[data-mode="static"] .beat {
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none !important;
+  }
+
+  html[data-mode="static"] .beat { --e: 1; }
+}
